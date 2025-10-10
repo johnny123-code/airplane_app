@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card stack">
+  <h2>Choose Path</h2>
+  <div class="stack">
+    <a class="btn primary" href="{{ url_for('music') }}">🎵 Music</a>
+    <a class="btn primary" href="{{ url_for('interests') }}">🧩 Interest</a>
+    <a class="btn primary" href="{{ url_for('purpose') }}">✈️ Purpose of Travel</a>
+    <a class="btn primary" href="{{ url_for('ai_recommend') }}">🤖 AI Recommendation</a>
+  </div>
+
+  <!-- Shows ONLY what's saved in session['profile'] -->
+  <div class="stack" style="margin-top:10px;background:rgba(255,255,255,.12);padding:10px;border-radius:10px">
+    <div><strong>Your picks (from Profile)</strong></div>
+    {% if profile %}
+      <div>🎵 Music: {{ profile.get('music','—') }}</div>
+
+      {# Build a list safely in Jinja using a namespace #}
+      {% set picks = namespace(items=[]) %}
+      {% if profile.get('sports') %}{% set _ = picks.items.append(profile.get('sports')) %}{% endif %}
+      {% if profile.get('tech') %}{% set _ = picks.items.append(profile.get('tech')) %}{% endif %}
+      {% if profile.get('art') %}{% set _ = picks.items.append(profile.get('art')) %}{% endif %}
+      {% if profile.get('food') %}{% set _ = picks.items.append(profile.get('food')) %}{% endif %}
+      {% if profile.get('shopping') %}{% set _ = picks.items.append(profile.get('shopping')) %}{% endif %}
+
+      <div>🧩 Interests: {{ picks.items|join(', ') if picks.items else '—' }}</div>
+      <div>✈️ Purpose: {{ profile.get('purpose','—') }}</div>
+    {% else %}
+      <div class="badge">No profile yet — set it up first.</div>
+    {% endif %}
+  </div>
+
+  <div class="row">
+    <a class="btn" href="{{ url_for('onboarding') }}">Create / Edit Profile</a>
+    <form action="{{ url_for('reset') }}" method="post">
+      <button class="btn ghost">Reset</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

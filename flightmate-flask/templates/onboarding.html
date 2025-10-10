@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card stack">
+  <h2>Create / Edit Profile</h2>
+  <form method="post" class="stack">
+
+    <input type="text" name="first" placeholder="First Name"
+           value="{{ (profile or {}).get('first','') }}" required>
+    <input type="text" name="last" placeholder="Last Name"
+           value="{{ (profile or {}).get('last','') }}" required>
+
+    <!-- Music -->
+    <label for="music">🎵 Favorite Music</label>
+    <select name="music" id="music" required>
+      <option value="">Select one</option>
+      {% for m in ["Hip-Hop","Jazz","Classical","Country"] %}
+        <option value="{{ m }}" {% if profile and profile.get('music') == m %}selected{% endif %}>{{ m }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Sports -->
+    <label for="sports">⚽ Favorite Sport</label>
+    <select name="sports" id="sports" required>
+      <option value="">Select one</option>
+      {% for s in ["Football","Soccer","Tennis","Golf"] %}
+        <option value="{{ s }}" {% if profile and profile.get('sports') == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Tech -->
+    <label for="tech">💻 Favorite Tech</label>
+    <select name="tech" id="tech" required>
+      <option value="">Select one</option>
+      {% for t in ["Computers","iPads","Console"] %}
+        <option value="{{ t }}" {% if profile and profile.get('tech') == t %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Art -->
+    <label for="art">🎨 Favorite Art Style</label>
+    <select name="art" id="art" required>
+      <option value="">Select one</option>
+      {% for a in ["Abstract","Pastel","Digital Art"] %}
+        <option value="{{ a }}" {% if profile and profile.get('art') == a %}selected{% endif %}>{{ a }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Food -->
+    <label for="food">🍕 Favorite Food</label>
+    <select name="food" id="food" required>
+      <option value="">Select one</option>
+      {% for f in ["Pizza","Spaghetti","Soup"] %}
+        <option value="{{ f }}" {% if profile and profile.get('food') == f %}selected{% endif %}>{{ f }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Shopping -->
+    <label for="shopping">🛍️ Favorite Store</label>
+    <select name="shopping" id="shopping" required>
+      <option value="">Select one</option>
+      {% for sh in ["Nike","Walmart","Target","Amazon"] %}
+        <option value="{{ sh }}" {% if profile and profile.get('shopping') == sh %}selected{% endif %}>{{ sh }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Purpose -->
+    <label for="purpose">✈️ Purpose of Visit</label>
+    <select name="purpose" id="purpose" required>
+      <option value="">Select one</option>
+      {% for p in ["Business","Friends/Family","Leisure","Studying Abroad"] %}
+        <option value="{{ p }}" {% if profile and profile.get('purpose') == p %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+
+    <div class="row">
+      <button class="btn primary" type="submit">Save</button>
+      <a class="btn ghost" href="{{ url_for('home') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

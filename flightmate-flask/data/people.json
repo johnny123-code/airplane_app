@@ -1,0 +1,9 @@
+[
+  { "id": 1, "name": "Alex",  "age": 22, "music": ["Jazz","Hip-Hop"],      "interests": ["Sports","Tech"], "destination": "New York",  "bio": "Listens to Jazz; soccer fan." },
+  { "id": 2, "name": "Emily", "age": 23, "music": ["Jazz","Classical"],    "interests": ["Food","Art"],    "destination": "Miami",     "bio": "Loves museums and pasta." },
+  { "id": 3, "name": "David", "age": 24, "music": ["Hip-Hop"],             "interests": ["Food","Sports"], "destination": "Las Vegas", "bio": "Italian food + football." },
+  { "id": 4, "name": "Jeff",  "age": 21, "music": ["Hip-Hop","Jazz"],      "interests": ["Tech","Sports"], "destination": "New York",  "bio": "CS freshman; pickup hoops." },
+  { "id": 5, "name": "Anna",  "age": 22, "music": ["Classical"],           "interests": ["Art","Food"],    "destination": "Miami",     "bio": "Violinist; cafe explorer." },
+  { "id": 6, "name": "Mark",  "age": 25, "music": ["Jazz"],                "interests": ["Sports"],        "destination": "New York",  "bio": "Knicks + playlists." },
+  { "id": 7, "name": "John",  "age": 26, "music": ["Classical","Jazz"],    "interests": ["Food"],          "destination": "Las Vegas", "bio": "Chef in training." }
+]

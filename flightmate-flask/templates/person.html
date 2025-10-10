@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card stack">
+  <h2>{{ p.name }}</h2>
+  <div class="badge">Age {{ p.age }}</div>
+
+  <div class="stack">
+    {% if p.music %}<span class="badge">🎵 {{ p.music|join(", ") }}</span>{% endif %}
+
+    {% set lines = [] %}
+    {% if p.sports %}{% set _ = lines.append('Sports: ' ~ p.sports) %}{% endif %}
+    {% if p.tech %}{% set _ = lines.append('Tech: ' ~ p.tech) %}{% endif %}
+    {% if p.art %}{% set _ = lines.append('Art: ' ~ p.art) %}{% endif %}
+    {% if p.food %}{% set _ = lines.append('Food: ' ~ p.food) %}{% endif %}
+    {% if p.shopping %}{% set _ = lines.append('Shopping: ' ~ p.shopping) %}{% endif %}
+    {% if lines %}<span class="badge">🧩 {{ lines|join(' • ') }}</span>{% endif %}
+
+    {% if p.purpose %}<span class="badge">✈️ {{ p.purpose|join(", ") }}</span>{% endif %}
+  </div>
+
+  <div class="row" style="margin-top:8px">
+    <button class="icon like" data-like="{{ p.id }}">❤️</button>
+    <button class="icon msg" data-chat>💬</button>
+    <a class="btn ghost" href="{{ url_for(back) }}">Back</a>
+    <button class="btn ok" data-connect="{{ p.id }}">Connect</button>
+  </div>
+</div>
+{% endblock %}

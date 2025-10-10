@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Destination — select</h2>
+  <div class="row">
+    {% for d in ["Las Vegas","New York","Miami"] %}
+      <a class="btn" href="{{ url_for('set_destination', dest=d) }}">{{ d }}</a>
+    {% endfor %}
+  </div>
+  {% if dest %}<p class="small">Selected: {{ dest }}</p>{% endif %}
+</div>
+
+{% if picks %}
+  <div class="card">
+    <h2>Passengers on route</h2>
+    <div class="list">
+      {% for p in picks %}
+        <div class="person card">
+          <div>
+            <strong>{{ p.name }}</strong>
+            <div class="meta">Going to {{ p.destination }}</div>
+          </div>
+          <div class="toolbar">
+            <button class="iconbtn like" data-like="{{ p.id }}">♥</button>
+            <button class="iconbtn skip" data-skip="{{ p.id }}">✕</button>
+            <a class="btn" href="{{ url_for('person', pid=p.id, back='destination') }}">Details</a>
+            <button class="btn" data-connect="{{ p.id }}">Connect</button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card stack">
+  <h2>🤖 AI Recommendation</h2>
+  <p>People with 3+ overlaps based on your picks.</p>
+</div>
+
+<div class="card stack">
+  <h2>AI Matches</h2>
+  {% if picks %}
+    {% for p,score in picks %}
+      <div class="person">
+        <div>
+          <div><strong>{{ p.name }}</strong></div>
+          <div class="meta">Overlap score: {{ score }}</div>
+        </div>
+        <div class="actions">
+          <button class="icon like" data-like="{{ p.id }}">❤️</button>
+          <a class="btn" href="{{ url_for('person', pid=p.id, back='ai_recommend') }}">Details</a>
+          <button class="btn ok" data-connect="{{ p.id }}">Connect</button>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="badge">No matches yet — pick Music / Interest / Purpose first.</div>
+  {% endif %}
+</div>
+{% endblock %}

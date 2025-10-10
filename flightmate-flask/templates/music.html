@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card stack">
+  <h2>Choose Music</h2>
+  <div class="row">
+    {% for g in ["Hip-Hop","Jazz","Classical","Country"] %}
+      <a class="btn" href="{{ url_for('set_music', genre=g) }}">{{ g }}</a>
+    {% endfor %}
+  </div>
+  {% if genre %}<div class="badge">Selected: {{ genre }}</div>{% endif %}
+</div>
+
+{% if picks %}
+<div class="card stack">
+  <h2>Matches</h2>
+  <div class="stack">
+    {% for p in picks %}
+      <div class="person">
+        <div>
+          <div><strong>{{ p.name }}</strong></div>
+          <div class="meta">Age {{ p.age }} • listens to {{ p.music|join(", ") }}</div>
+        </div>
+        <div class="actions">
+          <button class="icon like" data-like="{{ p.id }}">❤️</button>
+          <button class="icon msg" data-chat>💬</button>
+          <a class="btn" href="{{ url_for('person', pid=p.id, back='music') }}">Details</a>
+          <button class="btn ok" data-connect="{{ p.id }}">Connect</button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

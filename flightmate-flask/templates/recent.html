@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card stack">
+  <h2>Recently Connected</h2>
+  {% if recents %}
+    {% for p in recents %}
+      <div class="person">
+        <div><strong>{{ p.name }}</strong></div>
+        <div class="actions">
+          <a class="btn" href="{{ url_for('person', pid=p.id, back='recent') }}">View</a>
+          <button class="icon msg" data-chat>💬</button>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="badge">No connections yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

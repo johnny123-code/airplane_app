@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card stack">
+  <h2>Choose an Interest</h2>
+  <form method="post" class="row">
+    <select class="select" name="interest">
+      {% for i in ["Sports","Tech","Art","Food","Shopping"] %}
+        <option value="{{ i }}" {% if selected and i in selected %}selected{% endif %}>{{ i }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn primary">See Matches</button>
+  </form>
+  {% if selected %}
+    <div class="badge">Active filter: {{ selected[0] }}</div>
+  {% endif %}
+</div>
+
+{% if picks %}
+<div class="card stack">
+  <h2>Matches</h2>
+  {% for p in picks %}
+    <div class="person">
+      <div>
+        <div><strong>{{ p.name }}</strong></div>
+
+        {# Show the same detailed options the profile uses #}
+        {% set lines = [] %}
+        {% if p.sports %}{% set _ = lines.append('Sports: ' ~ p.sports) %}{% endif %}
+        {% if p.tech %}{% set _ = lines.append('Tech: ' ~ p.tech) %}{% endif %}
+        {% if p.art %}{% set _ = lines.append('Art: ' ~ p.art) %}{% endif %}
+        {% if p.food %}{% set _ = lines.append('Food: ' ~ p.food) %}{% endif %}
+        {% if p.shopping %}{% set _ = lines.append('Shopping: ' ~ p.shopping) %}{% endif %}
+        <div class="meta">{{ lines|join(' • ') }}</div>
+      </div>
+
+      <div class="actions">
+        <button class="icon like" data-like="{{ p.id }}">❤️</button>
+        <button class="icon msg" data-chat>💬</button>
+        <a class="btn" href="{{ url_for('person', pid=p.id, back='interests') }}">Details</a>
+        <button class="btn ok" data-connect="{{ p.id }}">Connect</button>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
