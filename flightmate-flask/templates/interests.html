@@ -2,16 +2,24 @@
 {% block content %}
 <div class="card stack">
   <h2>Choose an Interest</h2>
-  <form method="post" class="row">
-    <select class="select" name="interest">
-      {% for i in ["Sports","Tech","Art","Food","Shopping"] %}
-        <option value="{{ i }}" {% if selected and i in selected %}selected{% endif %}>{{ i }}</option>
-      {% endfor %}
-    </select>
-    <button class="btn primary">See Matches</button>
-  </form>
-  {% if selected %}
-    <div class="badge">Active filter: {{ selected[0] }}</div>
+
+  {% if my_values and my_values|length > 0 %}
+    <form method="post" class="row">
+      <select class="select" name="interest">
+        {% for val in my_values %}
+          <option value="{{ val }}" {% if selected and val == selected[0] %}selected{% endif %}>
+            {{ val }}
+          </option>
+        {% endfor %}
+      </select>
+      <button class="btn primary">See Matches</button>
+    </form>
+    {% if selected %}
+      <div class="badge">Matching on: {{ selected[0] }}</div>
+    {% endif %}
+  {% else %}
+    <div class="badge">No interests yet — set your profile first.</div>
+    <a class="btn" href="{{ url_for('onboarding') }}">Create / Edit Profile</a>
   {% endif %}
 </div>
 
@@ -23,7 +31,7 @@
       <div>
         <div><strong>{{ p.name }}</strong></div>
 
-        {# Show the same detailed options the profile uses #}
+        {# Show detailed interests line: "Sports: Football • Tech: Computers ..." #}
         {% set lines = [] %}
         {% if p.sports %}{% set _ = lines.append('Sports: ' ~ p.sports) %}{% endif %}
         {% if p.tech %}{% set _ = lines.append('Tech: ' ~ p.tech) %}{% endif %}
@@ -37,10 +45,14 @@
         <button class="icon like" data-like="{{ p.id }}">❤️</button>
         <button class="icon msg" data-chat>💬</button>
         <a class="btn" href="{{ url_for('person', pid=p.id, back='interests') }}">Details</a>
-        <button class="btn ok" data-connect="{{ p.id }}">Connect</button>
+        <a class="btn ok" href="{{ url_for('connect', pid=p.id) }}">Connect</a>
       </div>
     </div>
   {% endfor %}
+</div>
+{% elif selected and my_values and selected[0] in my_values %}
+<div class="card">
+  <div class="empty">No one matches <strong>{{ selected[0] }}</strong> yet. Try another one of your interests.</div>
 </div>
 {% endif %}
 {% endblock %}

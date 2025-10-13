@@ -23,7 +23,7 @@
         <button class="icon like" data-like="{{ p.id }}">❤️</button>
         <button class="icon msg" data-chat>💬</button>
         <a class="btn" href="{{ url_for('person', pid=p.id, back='purpose') }}">Details</a>
-        <button class="btn ok" data-connect="{{ p.id }}">Connect</button>
+        <a class="btn ok" href="{{ url_for('connect', pid=p.id) }}">Connect</a>
       </div>
     </div>
   {% endfor %}

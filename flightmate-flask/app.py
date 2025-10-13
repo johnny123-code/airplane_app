@@ -1,11 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-import json, os, math, random
+import json, os, random
 
 app = Flask(__name__)
 app.secret_key = "dev-secret"  # demo only
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Detailed options (same set you use in the profile form)
+# Options (exactly the ones used in onboarding/profile)
 # ────────────────────────────────────────────────────────────────────────────────
 CHOICES = {
     "Sports":   ["Football", "Soccer", "Tennis", "Golf"],
@@ -21,7 +21,7 @@ PURPOSES = ["Vacation", "Business", "Visiting Family", "Studying Abroad", "Event
 # Helpers
 # ────────────────────────────────────────────────────────────────────────────────
 def choose_deterministic(options, seed: int) -> str:
-    """Pick a stable value per person id so it doesn't change across runs."""
+    """Stable pick by seed (person id) so passengers don't change every run."""
     return options[seed % len(options)]
 
 def person_interest_values(p):
@@ -35,14 +35,16 @@ def person_interest_values(p):
 # ────────────────────────────────────────────────────────────────────────────────
 # Load seed people and normalize to detailed fields
 # ────────────────────────────────────────────────────────────────────────────────
-DATA = json.load(open(os.path.join(os.path.dirname(__file__), "data", "people.json")))
+DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "people.json")
+with open(DATA_PATH, "r", encoding="utf-8") as f:
+    DATA = json.load(f)
 
 for p in DATA:
-    # Ensure purpose exists (older demos)
+    # Ensure purpose exists for older demos
     if "purpose" not in p:
         p["purpose"] = ["Vacation"] if p["id"] % 2 else ["Business"]
 
-    # Map older generic categories into detailed fields that mirror the profile
+    # Map generic categories in p["interests"] -> detailed fields
     generic = set([s.title() for s in p.get("interests", [])])
 
     if "Sports" in generic and not p.get("sports"):
@@ -57,9 +59,9 @@ for p in DATA:
         p["shopping"] = choose_deterministic(CHOICES["Shopping"], p["id"])
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Generate extra synthetic passengers for variety
+# Generate extra synthetic passengers (first names only) for variety
 # ────────────────────────────────────────────────────────────────────────────────
-def generate_people(n=80, seed=42):
+def generate_people(n=80, seed=2025):
     rng = random.Random(seed)
     first_names = [
         "Alex","Jamie","Taylor","Jordan","Riley","Casey","Avery","Sam","Morgan","Cameron",
@@ -68,18 +70,14 @@ def generate_people(n=80, seed=42):
         "Ethan","Faith","Gavin","Hana","Ivan","Jada","Kian","Liam","Maya","Noah",
         "Owen","Paige","Ruth","Sara","Theo","Uma","Vera","Wes","Xena","Yara","Zane"
     ]
-
     cats = ["Sports","Tech","Art","Food","Shopping"]
     people = []
+    start_id = max([p["id"] for p in DATA] + [0]) + 1
     for i in range(n):
-        pid = (max([p["id"] for p in DATA] + [0]) + 1 + i)
-        name = rng.choice(first_names)  # ✅ only first name now
+        pid = start_id + i
+        name = rng.choice(first_names)  # first name only
         age = rng.randint(18, 60)
-
-        # Pick 1-2 music genres
         music = rng.sample(MUSIC_GENRES, k=rng.choice([1,1,2]))
-
-        # Assign 2-3 interest categories, then choose detailed value for each
         chosen_cats = rng.sample(cats, k=rng.choice([2,3]))
         detailed = {}
         generic_for_display = []
@@ -87,36 +85,30 @@ def generate_people(n=80, seed=42):
             val = rng.choice(CHOICES[c])
             detailed[c.lower()] = val
             generic_for_display.append(c)
-
-        # Purpose: 1 choice
         purpose = [rng.choice(PURPOSES)]
-
-        person = {
+        people.append({
             "id": pid,
             "name": name,
             "age": age,
             "music": music,
             "purpose": purpose,
-            "interests": generic_for_display,
+            "interests": generic_for_display,  # keep legacy field
             "sports": detailed.get("sports"),
             "tech": detailed.get("tech"),
             "art": detailed.get("art"),
             "food": detailed.get("food"),
             "shopping": detailed.get("shopping"),
-        }
-        people.append(person)
+        })
     return people
 
-# ✅ Regenerate with only first names
-DATA.extend(generate_people(n=10, seed=2025))
+DATA.extend(generate_people(n=80, seed=2025))
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Routes
 # ────────────────────────────────────────────────────────────────────────────────
 @app.route("/")
 def home():
-    # Home shows ONLY what's saved in the profile
-    profile = session.get("profile", {})
+    profile = session.get("profile", {})  # Home shows ONLY your saved profile picks
     return render_template("home.html", profile=profile)
 
 # MUSIC (browsing filter only)
@@ -131,21 +123,31 @@ def set_music(genre):
     session["filter_music"] = genre
     return redirect(url_for("music"))
 
-# INTERESTS (browsing filter only; matches by category presence)
+# INTERESTS — dropdown shows YOUR exact saved interests; match exact value; cap 10
 @app.route("/interests", methods=["GET", "POST"])
 def interests():
-    selected = session.get("filter_interests", [])
+    # Your saved detailed interests from profile
+    profile = session.get("profile", {})
+    my_values = [profile.get(k) for k in ["sports","tech","art","food","shopping"] if profile.get(k)]
+
+    selected = session.get("filter_interests_exact", [])
     if request.method == "POST":
         val = request.form.get("interest")
         selected = [val] if val else []
-        session["filter_interests"] = selected
+        session["filter_interests_exact"] = selected
 
-    key = selected[0].lower() if selected else None  # e.g. "Food" -> "food"
-    if key in {"sports", "tech", "art", "food", "shopping"}:
-        picks = [p for p in DATA if p.get(key)]
-    else:
-        picks = []
-    return render_template("interests.html", selected=selected, picks=picks)
+    picks = []
+    if selected and my_values and selected[0] in my_values:
+        target = selected[0]
+        pool = [p for p in DATA if target in person_interest_values(p)]
+        rnd = random.Random(hash(target) ^ 2025)  # deterministic shuffle per value
+        rnd.shuffle(pool)
+        picks = pool[:10]
+
+    return render_template("interests.html",
+                           my_values=my_values,
+                           selected=selected,
+                           picks=picks)
 
 # PURPOSE (browsing filter only)
 @app.route("/purpose")
@@ -159,61 +161,89 @@ def set_purpose(reason):
     session["filter_purpose"] = reason
     return redirect(url_for("purpose"))
 
-# PERSON + actions
+# PERSON page
 @app.route("/person/<int:pid>")
 def person(pid):
     back = request.args.get("back", "home")
     p = next(x for x in DATA if x["id"] == pid)
     return render_template("person.html", p=p, back=back)
 
-@app.route("/connect/<int:pid>", methods=["POST"])
-def connect(pid):
-    recent = set(session.get("recent", []))
-    recent.add(pid)
-    session["recent"] = list(recent)
-    return jsonify(ok=True)
-
+# LIKE / RECENT
 @app.route("/like/<int:pid>", methods=["POST"])
 def like(pid):
     likes = set(session.get("likes", []))
     action = "added" if pid not in likes else "removed"
-    if action == "added":
-        likes.add(pid)
-    else:
-        likes.remove(pid)
+    if action == "added": likes.add(pid)
+    else: likes.remove(pid)
     session["likes"] = list(likes)
     return jsonify(ok=True, action=action)
 
-# AI RECOMMEND (uses ONLY saved profile)
-@app.route("/ai")
-def ai_recommend():
-    profile = session.get("profile", {})
-    chosen_music = profile.get("music")
-    chosen_purpose = profile.get("purpose")
-    chosen_interests = [profile.get(k) for k in ["sports", "tech", "art", "food", "shopping"] if profile.get(k)]
-
-    results = []
-    for p in DATA:
-        score = 0
-        if chosen_music and chosen_music in p.get("music", []):
-            score += 1
-        if chosen_purpose and chosen_purpose in p.get("purpose", []):
-            score += 1
-        if chosen_interests:
-            score += sum(1 for i in chosen_interests if i in person_interest_values(p))
-        if score >= 3:
-            results.append((p, score))
-    return render_template("ai.html", picks=results)
-
-# RECENT
 @app.route("/recent")
 def recent():
     ids = session.get("recent", [])
     recents = [p for p in DATA if p["id"] in ids]
     return render_template("recent.html", recents=recents)
 
-# ONBOARDING (the ONLY place that updates Your picks/profile)
-@app.route("/onboarding", methods=["GET", "POST"])
+# ────────────────────────────────────────────────────────────────────────────────
+# Connect -> Chat; Chat screen with simple session-based messages
+# ────────────────────────────────────────────────────────────────────────────────
+@app.route("/connect/<int:pid>")
+def connect(pid):
+    recent = set(session.get("recent", []))
+    recent.add(pid)
+    session["recent"] = list(recent)
+    return redirect(url_for("chat", pid=pid))
+
+@app.route("/chat/<int:pid>", methods=["GET", "POST"])
+def chat(pid):
+    p = next(x for x in DATA if x["id"] == pid)
+    chats = session.get("chats", {})     # {'12': [{'from':'You','text':'hi'}, ...]}
+    key = str(pid)
+
+    if request.method == "POST":
+        msg = (request.form.get("message") or "").strip()
+        if msg:
+            chats.setdefault(key, []).append({"from": "You", "text": msg})
+            # tiny simulated reply so the screen feels alive
+            canned = [
+                f"Hey! I'm {p['name']}.",
+                "Nice to meet you ✈️",
+                "When do you fly?",
+                "Cool! What seat are you in?",
+                "Love that music too 🎵",
+            ]
+            chats[key].append({"from": p["name"], "text": random.choice(canned)})
+            session["chats"] = chats
+        return redirect(url_for("chat", pid=pid))
+
+    messages = chats.get(key, [])
+    return render_template("chat.html", p=p, messages=messages)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# AI RECOMMEND (uses ONLY saved profile)
+# ────────────────────────────────────────────────────────────────────────────────
+@app.route("/ai")
+def ai_recommend():
+    profile = session.get("profile", {})
+    chosen_music = profile.get("music")
+    chosen_purpose = profile.get("purpose")
+    chosen_interests = [profile.get(k) for k in ["sports","tech","art","food","shopping"] if profile.get(k)]
+
+    results = []
+    for p in DATA:
+        score = 0
+        if chosen_music and chosen_music in p.get("music", []): score += 1
+        if chosen_purpose and chosen_purpose in p.get("purpose", []): score += 1
+        if chosen_interests:
+            score += sum(1 for i in chosen_interests if i in person_interest_values(p))
+        if score >= 3:
+            results.append((p, score))
+    return render_template("ai.html", picks=results)
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Onboarding (ONLY place that updates "Your picks")
+# ────────────────────────────────────────────────────────────────────────────────
+@app.route("/onboarding", methods=["GET","POST"])
 def onboarding():
     profile = session.get("profile", {})
     if request.method == "POST":
@@ -232,7 +262,7 @@ def onboarding():
         return redirect(url_for("home"))
     return render_template("onboarding.html", profile=profile)
 
-# UTIL
+# Utilities
 @app.route("/reset", methods=["POST"])
 def reset():
     session.clear()
