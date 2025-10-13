@@ -1,66 +1,37 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{{ title or "Flightmate" }}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  <!-- iOS PWA-like bits (optional) -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flightmate ✈️</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <!-- Desk/desktop background -->
-  <div class="desk-bg">
-    <!-- iPhone shell -->
-    <div class="phone-shell">
-      <!-- iOS status bar + notch -->
-      <div class="ios-status">
-        <span class="time" id="status-time">9:41</span>
-        <div class="sigs">
-          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-          <span class="battery"></span>
-        </div>
-        <div class="notch"></div>
+  <header>
+    <nav class="navbar">
+      <div class="nav-left">
+        <div class="logo">✈️ Flightmate</div>
+        <input type="text" placeholder="Search passengers..." class="search-bar" />
       </div>
-
-      <!-- iOS navbar -->
-      <header class="ios-nav">
-        <div class="title">Flightmate ✈️</div>
-      </header>
-
-      <!-- Screen content (your pages render here) -->
-      <main class="screen">
-        {% block content %}{% endblock %}
-        <div class="safe-bottom"></div>
-      </main>
-
-      <!-- Bottom iOS-style tab bar -->
-      <nav class="tabbar">
-        <a class="tab {% if request.endpoint=='home' %}active{% endif %}" href="{{ url_for('home') }}">🏠<span>Home</span></a>
-        <a class="tab {% if request.endpoint in ['music','set_music'] %}active{% endif %}" href="{{ url_for('music') }}">🎵<span>Music</span></a>
-        <a class="tab {% if request.endpoint=='interests' %}active{% endif %}" href="{{ url_for('interests') }}">🧩<span>Interest</span></a>
-        <a class="tab {% if request.endpoint in ['purpose','set_purpose'] %}active{% endif %}" href="{{ url_for('purpose') }}">✈️<span>Purpose</span></a>
-        <a class="tab {% if request.endpoint=='ai_recommend' %}active{% endif %}" href="{{ url_for('ai_recommend') }}">🤖<span>AI</span></a>
-      </nav>
-
-      <!-- Quick action chips -->
-      <div class="floating-profile">
-        <a class="chip" href="{{ url_for('onboarding') }}">Profile</a>
-        <a class="chip" href="{{ url_for('recent') }}">Recent</a>
-        <form action="{{ url_for('reset') }}" method="post" class="chip-form">
-          <button class="chip danger" title="Reset demo">Reset</button>
-        </form>
+      <div class="nav-right">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('interests') }}">Interests</a>
+        <a href="{{ url_for('purpose') }}">Purpose</a>
+        <a href="{{ url_for('ai') }}">AI Recommend</a>
+        <a href="{{ url_for('onboarding') }}">Profile</a>
+        <button id="themeToggle">🌓</button>
       </div>
-    </div>
-  </div>
+    </nav>
+  </header>
 
-  <!-- Tiny live clock -->
-  <script>
-    const el = document.getElementById('status-time');
-    function t(){const d=new Date();let h=d.getHours(),m=('0'+d.getMinutes()).slice(-2);el&&(el.textContent=`${h}:${m}`);}
-    t(); setInterval(t,15000);
-  </script>
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <p>© 2025 Flightmate • Designed for Students ✈️</p>
+  </footer>
+
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

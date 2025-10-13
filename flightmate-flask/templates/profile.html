@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="profile-container">
+  <h1 class="title">👤 Create / Edit Profile</h1>
+  <p class="subtitle">Set up your FlightMate profile so you can connect with travelers like you.</p>
+
+  <form action="{{ url_for('create_profile') }}" method="POST" class="profile-form">
+
+    <!-- NAME -->
+    <div class="form-group">
+      <label for="name">Your Name:</label>
+      <input type="text" id="name" name="name" placeholder="Enter your first name" required />
+    </div>
+
+    <!-- MUSIC -->
+    <div class="form-group">
+      <label for="music">🎵 Favorite Music Genre:</label>
+      <select id="music" name="music" required>
+        <option value="" disabled selected>Select a genre</option>
+        {% for m in music_options %}
+        <option value="{{ m }}">{{ m }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- PURPOSE -->
+    <div class="form-group">
+      <label for="purpose">✈️ Purpose of Travel:</label>
+      <select id="purpose" name="purpose" required>
+        <option value="" disabled selected>Select a purpose</option>
+        {% for p in purpose_options %}
+        <option value="{{ p }}">{{ p }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- INTERESTS -->
+    <div class="form-group">
+      <label>🧩 Interests:</label>
+      <div class="checkbox-grid">
+        {% for interest in interest_categories %}
+        <label class="checkbox-item">
+          <input type="checkbox" name="interests" value="{{ interest }}" />
+          {{ interest }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button type="submit" class="btn primary">Save Profile</button>
+      <a href="{{ url_for('home') }}" class="btn secondary">Cancel</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

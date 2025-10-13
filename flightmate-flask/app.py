@@ -149,6 +149,50 @@ def interests():
                            selected=selected,
                            picks=picks)
 
+@app.route('/ai')
+def ai():
+    profile = session.get("profile", {})
+    user_interests = profile.get("interests", [])
+    user_music = profile.get("music", "")
+    user_purpose = profile.get("purpose", "")
+
+    # Generate fake matches dynamically
+    all_people = [
+        {"name": "Ava", "age": 22, "music": "Hip-Hop", "interests": ["Football", "Computers", "Pizza"], "purpose": "Business"},
+        {"name": "Liam", "age": 24, "music": "Jazz", "interests": ["Pastel", "Computers", "Tech"], "purpose": "Studying Abroad"},
+        {"name": "Maya", "age": 20, "music": "Classical", "interests": ["Art", "Spaghetti", "Tech"], "purpose": "Leisure"},
+        {"name": "Ethan", "age": 21, "music": "Hip-Hop", "interests": ["Football", "Tech", "Walmart"], "purpose": "Business"},
+        {"name": "Sophia", "age": 23, "music": "Country", "interests": ["Food", "Shopping", "Computers"], "purpose": "Friends/Family"},
+        {"name": "Noah", "age": 25, "music": "Jazz", "interests": ["Art", "Tech", "Football"], "purpose": "Studying Abroad"},
+        {"name": "Olivia", "age": 26, "music": "Hip-Hop", "interests": ["Tech", "Computers", "Food"], "purpose": "Leisure"},
+        {"name": "Lucas", "age": 22, "music": "Country", "interests": ["Shopping", "Football", "Pizza"], "purpose": "Business"},
+        {"name": "Emma", "age": 24, "music": "Hip-Hop", "interests": ["Computers", "Tech", "Food"], "purpose": "Studying Abroad"},
+        {"name": "Mason", "age": 27, "music": "Classical", "interests": ["Tech", "Food", "Computers"], "purpose": "Business"}
+    ]
+
+    # Filter “recommended” people by shared interest or music or purpose
+    recommendations = []
+    for person in all_people:
+        score = 0
+        if user_music and person["music"] == user_music:
+            score += 1
+        if user_purpose and person["purpose"] == user_purpose:
+            score += 1
+        if user_interests:
+            shared = set(user_interests) & set(person["interests"])
+            score += len(shared)
+        if score > 0:
+            person["score"] = score
+            recommendations.append(person)
+
+    # Sort by best matches (descending score)
+    recommendations.sort(key=lambda x: x["score"], reverse=True)
+    recommendations = recommendations[:6]  # only top 6
+
+    return render_template("ai.html", profile=profile, recommendations=recommendations)
+
+
+
 # PURPOSE (browsing filter only)
 @app.route("/purpose")
 def purpose():
