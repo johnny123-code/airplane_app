@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="profile-view">
+  <div class="profile-card">
+    <div class="profile-header">
+      <div class="avatar-circle">👤</div>
+      <h2>{{ person.name }}</h2>
+      <p class="age">Age: {{ person.age or "21" }}</p>
+    </div>
+
+    <div class="profile-info">
+      <p><strong>🎯 Purpose:</strong> {{ person.purpose }}</p>
+      <p><strong>🎵 Favorite Music:</strong> {{ person.music }}</p>
+
+      <div class="interests">
+        {% for interest in person.interests %}
+          <span class="interest-tag">{{ interest }}</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="profile-buttons">
+      <a href="{{ url_for('connect', name=person.name) }}" class="btn-primary">💬 Connect</a>
+      <a href="{{ url_for('interests') }}" class="btn-secondary">⬅ Back</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

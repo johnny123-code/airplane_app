@@ -1,34 +1,42 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card stack">
-  <h2>Choose Music</h2>
-  <div class="row">
-    {% for g in ["Hip-Hop","Jazz","Classical","Country"] %}
-      <a class="btn" href="{{ url_for('set_music', genre=g) }}">{{ g }}</a>
-    {% endfor %}
-  </div>
-  {% if genre %}<div class="badge">Selected: {{ genre }}</div>{% endif %}
+
+<div class="music-container">
+  <h2>🎵 Choose Music</h2>
+
+  <form method="POST" action="{{ url_for('music') }}" class="music-form">
+    <div class="music-buttons">
+      <button type="submit" name="music" value="Hip-Hop" class="btn-primary">Hip-Hop</button>
+      <button type="submit" name="music" value="Jazz" class="btn-primary">Jazz</button>
+      <button type="submit" name="music" value="Classical" class="btn-primary">Classical</button>
+      <button type="submit" name="music" value="Pop" class="btn-primary">Pop</button>
+      <button type="submit" name="music" value="Rock" class="btn-primary">Rock</button>
+    </div>
+  </form>
+
+  {% if genre %}
+    <h3>👥 Passengers who like {{ genre }}:</h3>
+
+    {% if matches %}
+      <div class="music-results">
+        {% for p in matches %}
+          <div class="passenger-card">
+            <h3>{{ p.name }}</h3>
+            <p>{{ p.purpose }}</p>
+            <p>🎵 Listens to {{ p.music }}</p>
+
+            <div class="buttons">
+              <button class="heart-btn">❤️</button>
+              <a href="{{ url_for('person', name=p.name) }}" class="btn-secondary">👤</a>
+              <a href="{{ url_for('connect', name=p.name) }}" class="btn-primary">💬 Connect</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="no-results">No matches found for {{ genre }}. Try another genre!</p>
+    {% endif %}
+  {% endif %}
 </div>
 
-{% if picks %}
-<div class="card stack">
-  <h2>Matches</h2>
-  <div class="stack">
-    {% for p in picks %}
-      <div class="person">
-        <div>
-          <div><strong>{{ p.name }}</strong></div>
-          <div class="meta">Age {{ p.age }} • listens to {{ p.music|join(", ") }}</div>
-        </div>
-        <div class="actions">
-          <button class="icon like" data-like="{{ p.id }}">❤️</button>
-          <button class="icon msg" data-chat>💬</button>
-          <a class="btn" href="{{ url_for('person', pid=p.id, back='music') }}">Details</a>
-          <a class="btn ok" href="{{ url_for('connect', pid=p.id) }}">Connect</a>
-        </div>
-      </div>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
 {% endblock %}

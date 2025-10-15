@@ -1,58 +1,28 @@
 {% extends "base.html" %}
+{% block title %}Interests · Flightmate{% endblock %}
+
 {% block content %}
-<div class="card stack">
-  <h2>Choose an Interest</h2>
+<div class="container narrow">
+  <div class="card">
+    <h1 class="page-title">🎯 Choose Interests</h1>
 
-  {% if my_values and my_values|length > 0 %}
-    <form method="post" class="row">
-      <select class="select" name="interest">
-        {% for val in my_values %}
-          <option value="{{ val }}" {% if selected and val == selected[0] %}selected{% endif %}>
-            {{ val }}
-          </option>
+    {% if not profile_interests %}
+      <p class="muted">
+        You haven’t saved any interests yet. Head to your
+        <a href="{{ url_for('profile') }}">Profile</a> to add some, then come back here.
+      </p>
+    {% else %}
+<form action="{{ url_for('connect_by_interests') }}" method="POST">
+    <h2>🎯 Choose Interests</h2>
+    <p>Pick one of your interests</p>
+    <select name="interest" required>
+        {% for interest in profile_interests %}
+            <option value="{{ interest }}">{{ interest }}</option>
         {% endfor %}
-      </select>
-      <button class="btn primary">See Matches</button>
-    </form>
-    {% if selected %}
-      <div class="badge">Matching on: {{ selected[0] }}</div>
+    </select>
+    <button type="submit" class="btn-primary">Connect</button>
+</form>
     {% endif %}
-  {% else %}
-    <div class="badge">No interests yet — set your profile first.</div>
-    <a class="btn" href="{{ url_for('onboarding') }}">Create / Edit Profile</a>
-  {% endif %}
+  </div>
 </div>
-
-{% if picks %}
-<div class="card stack">
-  <h2>Matches</h2>
-  {% for p in picks %}
-    <div class="person">
-      <div>
-        <div><strong>{{ p.name }}</strong></div>
-
-        {# Show detailed interests line: "Sports: Football • Tech: Computers ..." #}
-        {% set lines = [] %}
-        {% if p.sports %}{% set _ = lines.append('Sports: ' ~ p.sports) %}{% endif %}
-        {% if p.tech %}{% set _ = lines.append('Tech: ' ~ p.tech) %}{% endif %}
-        {% if p.art %}{% set _ = lines.append('Art: ' ~ p.art) %}{% endif %}
-        {% if p.food %}{% set _ = lines.append('Food: ' ~ p.food) %}{% endif %}
-        {% if p.shopping %}{% set _ = lines.append('Shopping: ' ~ p.shopping) %}{% endif %}
-        <div class="meta">{{ lines|join(' • ') }}</div>
-      </div>
-
-      <div class="actions">
-        <button class="icon like" data-like="{{ p.id }}">❤️</button>
-        <button class="icon msg" data-chat>💬</button>
-        <a class="btn" href="{{ url_for('person', pid=p.id, back='interests') }}">Details</a>
-        <a class="btn ok" href="{{ url_for('connect', pid=p.id) }}">Connect</a>
-      </div>
-    </div>
-  {% endfor %}
-</div>
-{% elif selected and my_values and selected[0] in my_values %}
-<div class="card">
-  <div class="empty">No one matches <strong>{{ selected[0] }}</strong> yet. Try another one of your interests.</div>
-</div>
-{% endif %}
 {% endblock %}

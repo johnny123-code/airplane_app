@@ -1,29 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card stack">
-  <h2>Chat with {{ p.name }}</h2>
-
-  <div class="chat-window">
-    {% if messages %}
-      {% for m in messages %}
-        <div class="bubble {% if m.from == 'You' %}me{% else %}them{% endif %}">
-          <div class="from">{{ m.from }}</div>
-          <div class="text">{{ m.text }}</div>
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="empty">Say hi to start the conversation 👋</div>
-    {% endif %}
-  </div>
-
-  <form method="post" class="row">
-    <input type="text" name="message" placeholder="Type a message…" required style="flex:1" />
-    <button class="btn primary">Send</button>
+<div class="chat-window">
+  {% if chat_history and chat_history|length %}
+    {% for m in chat_history %}
+      <div class="msg {{ 'me' if m.sender == 'You' else 'them' }}">
+        <strong>{{ m.sender }}:</strong> {{ m.text }}
+      </div>
+    {% endfor %}
+  {% else %}
+    <!-- blank on purpose -->
+  {% endif %}
+</div>
+<form method="post" action="{{ url_for('send_message', name=user.name) }}">
+<div class="chat-bottom">
+  <form method="POST" action="{{ url_for('send_message', name=user.name) }}" class="chat-form">
+    <input type="text" name="message" placeholder="Type your message..." autofocus required />
+    <button type="submit" class="btn-primary">Send</button>
   </form>
 
-  <div class="row" style="margin-top:6px">
-    <a class="btn ghost" href="{{ url_for('person', pid=p.id, back='home') }}">View Profile</a>
-    <a class="btn" href="{{ url_for('home') }}">Done</a>
+  <div class="chat-nav">
+    <a href="{{ url_for('home') }}" class="btn-secondary">🏠 Back to Home</a>
   </div>
+</div>
+
 </div>
 {% endblock %}

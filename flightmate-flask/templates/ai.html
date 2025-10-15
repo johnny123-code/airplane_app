@@ -1,28 +1,52 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="container">
-  <div class="card">
-    <h2>🤖 AI Recommendations</h2>
-    <p class="subtitle">
-      Based on your profile, here are other passengers who share your vibe:
-    </p>
+<div class="card center">
+  <h2>🤖 AI Recommendations</h2>
 
-    {% if recommendations %}
-      <div class="recommend-grid">
-        {% for r in recommendations %}
-          <div class="recommend-card">
-            <h3>{{ r.name }}, <span class="age">{{ r.age }}</span></h3>
-            <p><strong>🎵 Music:</strong> {{ r.music }}</p>
-            <p><strong>🧩 Interests:</strong> {{ ', '.join(r.interests) }}</p>
-            <p><strong>✈️ Purpose:</strong> {{ r.purpose }}</p>
-            <button class="connect-btn">💬 Connect</button>
-          </div>
-        {% endfor %}
+  {% if matches and matches|length > 0 %}
+    <p>Based on your profile, here are some passengers you might connect with:</p>
+
+    <div class="matches-container">
+      {% for person in matches %}
+      <div class="match-card">
+        <h3>{{ person.name }}</h3>
+        <p>{{ person.purpose or "Traveler" }}</p>
+        {% if person.music %}
+          <p>🎵 Listens to {{ person.music }}</p>
+        {% endif %}
+        {% if person.interests %}
+          <p>🎯 Interests: {{ person.interests | join(", ") }}</p>
+        {% endif %}
+        <div class="buttons">
+          <a href="{{ url_for('person', name=person.name) }}" class="btn-secondary">👤 View Profile</a>
+          <a href="{{ url_for('connect', name=person.name) }}" class="btn-primary">💬 Connect</a>
+        </div>
       </div>
+      {% endfor %}
+    </div>
+
     {% else %}
-      <p>No matches found yet — try updating your profile!</p>
-    {% endif %}
+    <p><i>No matches found. Try updating your profile!</i></p>
+  {% endif %}
+
+  <div style="margin-top: 1.5rem; text-align: center;">
+    <a href="{{ url_for('ai') }}" class="btn-refresh">🔁 Refresh Recommendations</a>
   </div>
 </div>
+
+<style>
+.btn-refresh {
+  display: inline-block;
+  background-color: #3b82f6;
+  color: white;
+  font-weight: bold;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.btn-refresh:hover {
+  background-color: #2563eb;
+}
+</style>
 {% endblock %}

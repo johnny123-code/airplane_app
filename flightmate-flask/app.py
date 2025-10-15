@@ -1,316 +1,376 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-import json, os, random
+from flask import Flask, render_template, request, redirect, url_for, session
+from flask_session import Session
+import json
+import os
+import shutil
+
+# --- AUTO-CLEAR CHAT HISTORY ON STARTUP ---
+SESSION_DIR = "flask_session"
+if os.path.exists(SESSION_DIR):
+    shutil.rmtree(SESSION_DIR)  # deletes all old session files
+    print("🧹 Cleared old chat sessions on startup.")
+os.makedirs(SESSION_DIR, exist_ok=True)
+
 
 app = Flask(__name__)
-app.secret_key = "dev-secret"  # demo only
+app.secret_key = "secret_key"
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Options (exactly the ones used in onboarding/profile)
-# ────────────────────────────────────────────────────────────────────────────────
-CHOICES = {
-    "Sports":   ["Football", "Soccer", "Tennis", "Golf"],
-    "Tech":     ["Computers", "iPads", "Console"],
-    "Art":      ["Abstract", "Pastel", "Digital Art"],
-    "Food":     ["Pizza", "Spaghetti", "Soup"],
-    "Shopping": ["Nike", "Walmart", "Target", "Amazon"],
-}
-MUSIC_GENRES = ["Hip-Hop", "Jazz", "Classical", "Country"]
-PURPOSES = ["Vacation", "Business", "Visiting Family", "Studying Abroad", "Event / Conference"]
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_FILE_DIR"] = SESSION_DIR
+Session(app)
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Helpers
-# ────────────────────────────────────────────────────────────────────────────────
-def choose_deterministic(options, seed: int) -> str:
-    """Stable pick by seed (person id) so passengers don't change every run."""
-    return options[seed % len(options)]
 
-def person_interest_values(p):
-    """Set of detailed interest values a person has (for overlap scoring)."""
-    vals = []
-    for key in ["sports", "tech", "art", "food", "shopping"]:
-        if p.get(key):
-            vals.append(p[key])
-    return set(vals)
+# -----------------------------
+# SAMPLE PASSENGERS
+# -----------------------------
+# Example passenger dataset (replace or add more)
+passengers = [
+    {"name": "Casey", "music": "Hip-Hop", "purpose": "Visiting Family"},
+    {"name": "Sophia", "music": "Hip-Hop", "purpose": "Study Abroad"},
+    {"name": "Ethan", "music": "Hip-Hop", "purpose": "Vacation"},
+    {"name": "Liam", "music": "Hip-Hop", "purpose": "Business"},
+    {"name": "Ava", "music": "Hip-Hop", "purpose": "Visiting Family"},
+    {"name": "Mia", "music": "Hip-Hop", "purpose": "Event / Conference"},
+    {"name": "Noah", "music": "Hip-Hop", "purpose": "Study Abroad"},
+    {"name": "Lucas", "music": "Hip-Hop", "purpose": "Vacation"},
+    {"name": "Isabella", "music": "Hip-Hop", "purpose": "Business"},
+    {"name": "Harper", "music": "Hip-Hop", "purpose": "Vacation"},
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Load seed people and normalize to detailed fields
-# ────────────────────────────────────────────────────────────────────────────────
-DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "people.json")
-with open(DATA_PATH, "r", encoding="utf-8") as f:
-    DATA = json.load(f)
+    {"name": "Oliver", "music": "Jazz", "purpose": "Vacation"},
+    {"name": "Emma", "music": "Jazz", "purpose": "Business"},
+    {"name": "Mason", "music": "Jazz", "purpose": "Study Abroad"},
+    {"name": "Ella", "music": "Jazz", "purpose": "Visiting Family"},
+    {"name": "Henry", "music": "Jazz", "purpose": "Vacation"},
+    {"name": "Charlotte", "music": "Jazz", "purpose": "Business"},
+    {"name": "Amelia", "music": "Jazz", "purpose": "Event / Conference"},
+    {"name": "Jack", "music": "Jazz", "purpose": "Study Abroad"},
+    {"name": "Evelyn", "music": "Jazz", "purpose": "Visiting Family"},
+    {"name": "James", "music": "Jazz", "purpose": "Vacation"},
 
-for p in DATA:
-    # Ensure purpose exists for older demos
-    if "purpose" not in p:
-        p["purpose"] = ["Vacation"] if p["id"] % 2 else ["Business"]
+    {"name": "William", "music": "Classical", "purpose": "Study Abroad"},
+    {"name": "Scarlett", "music": "Classical", "purpose": "Business"},
+    {"name": "Benjamin", "music": "Classical", "purpose": "Vacation"},
+    {"name": "Grace", "music": "Classical", "purpose": "Event / Conference"},
+    {"name": "Levi", "music": "Classical", "purpose": "Visiting Family"},
+    {"name": "Victoria", "music": "Classical", "purpose": "Vacation"},
+    {"name": "Daniel", "music": "Classical", "purpose": "Study Abroad"},
+    {"name": "Zoe", "music": "Classical", "purpose": "Business"},
+    {"name": "Matthew", "music": "Classical", "purpose": "Event / Conference"},
+    {"name": "Chloe", "music": "Classical", "purpose": "Vacation"},
 
-    # Map generic categories in p["interests"] -> detailed fields
-    generic = set([s.title() for s in p.get("interests", [])])
+    {"name": "Logan", "music": "Pop", "purpose": "Vacation"},
+    {"name": "Luna", "music": "Pop", "purpose": "Visiting Family"},
+    {"name": "Elijah", "music": "Pop", "purpose": "Business"},
+    {"name": "Mila", "music": "Pop", "purpose": "Study Abroad"},
+    {"name": "Wyatt", "music": "Pop", "purpose": "Event / Conference"},
+    {"name": "Sofia", "music": "Pop", "purpose": "Vacation"},
+    {"name": "Hudson", "music": "Pop", "purpose": "Business"},
+    {"name": "Ella", "music": "Pop", "purpose": "Visiting Family"},
+    {"name": "Luke", "music": "Pop", "purpose": "Vacation"},
+    {"name": "Hazel", "music": "Pop", "purpose": "Study Abroad"},
 
-    if "Sports" in generic and not p.get("sports"):
-        p["sports"] = choose_deterministic(CHOICES["Sports"], p["id"])
-    if "Tech" in generic and not p.get("tech"):
-        p["tech"] = choose_deterministic(CHOICES["Tech"], p["id"])
-    if "Art" in generic and not p.get("art"):
-        p["art"] = choose_deterministic(CHOICES["Art"], p["id"])
-    if "Food" in generic and not p.get("food"):
-        p["food"] = choose_deterministic(CHOICES["Food"], p["id"])
-    if "Shopping" in generic and not p.get("shopping"):
-        p["shopping"] = choose_deterministic(CHOICES["Shopping"], p["id"])
+    {"name": "Grayson", "music": "Rock", "purpose": "Event / Conference"},
+    {"name": "Nora", "music": "Rock", "purpose": "Vacation"},
+    {"name": "Leo", "music": "Rock", "purpose": "Visiting Family"},
+    {"name": "Aria", "music": "Rock", "purpose": "Business"},
+    {"name": "Jackson", "music": "Rock", "purpose": "Study Abroad"},
+    {"name": "Ella", "music": "Rock", "purpose": "Vacation"},
+    {"name": "Aiden", "music": "Rock", "purpose": "Business"},
+    {"name": "Riley", "music": "Rock", "purpose": "Event / Conference"},
+    {"name": "Lila", "music": "Rock", "purpose": "Vacation"},
+    {"name": "Hunter", "music": "Rock", "purpose": "Study Abroad"}
+]
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Generate extra synthetic passengers (first names only) for variety
-# ────────────────────────────────────────────────────────────────────────────────
-def generate_people(n=80, seed=2025):
-    rng = random.Random(seed)
-    first_names = [
-        "Alex","Jamie","Taylor","Jordan","Riley","Casey","Avery","Sam","Morgan","Cameron",
-        "Chris","Dana","Drew","Elliot","Harper","Jesse","Kai","Logan","Milan","Parker",
-        "Quinn","Reese","Rowan","Sage","Skyler","Tatum","Aria","Bella","Chloe","Dylan",
-        "Ethan","Faith","Gavin","Hana","Ivan","Jada","Kian","Liam","Maya","Noah",
-        "Owen","Paige","Ruth","Sara","Theo","Uma","Vera","Wes","Xena","Yara","Zane"
-    ]
-    cats = ["Sports","Tech","Art","Food","Shopping"]
-    people = []
-    start_id = max([p["id"] for p in DATA] + [0]) + 1
-    for i in range(n):
-        pid = start_id + i
-        name = rng.choice(first_names)  # first name only
-        age = rng.randint(18, 60)
-        music = rng.sample(MUSIC_GENRES, k=rng.choice([1,1,2]))
-        chosen_cats = rng.sample(cats, k=rng.choice([2,3]))
-        detailed = {}
-        generic_for_display = []
-        for c in chosen_cats:
-            val = rng.choice(CHOICES[c])
-            detailed[c.lower()] = val
-            generic_for_display.append(c)
-        purpose = [rng.choice(PURPOSES)]
-        people.append({
-            "id": pid,
-            "name": name,
-            "age": age,
-            "music": music,
-            "purpose": purpose,
-            "interests": generic_for_display,  # keep legacy field
-            "sports": detailed.get("sports"),
-            "tech": detailed.get("tech"),
-            "art": detailed.get("art"),
-            "food": detailed.get("food"),
-            "shopping": detailed.get("shopping"),
-        })
-    return people
 
-DATA.extend(generate_people(n=80, seed=2025))
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Routes
-# ────────────────────────────────────────────────────────────────────────────────
+# -----------------------------
+# ROUTES
+# -----------------------------
 @app.route("/")
 def home():
-    profile = session.get("profile", {})  # Home shows ONLY your saved profile picks
-    return render_template("home.html", profile=profile)
+    profile = session.get("profile", {})
+    return render_template("home.html", profile=profile, active="home")
 
-# MUSIC (browsing filter only)
-@app.route("/music")
+@app.route("/create_profile")
+def create_profile():
+    profile = session.get("profile", {})
+    return render_template("person.html", profile=profile, active="profile")
+
+@app.route("/save_profile", methods=["POST"])
+def save_profile():
+    session["profile"] = {
+        "name": request.form.get("name"),
+        "music": request.form.get("genre"),
+        "purpose": request.form.get("purpose"),
+        "interests": request.form.getlist("interests")
+    }
+    session.modified = True
+    return redirect(url_for("home"))
+
+@app.route("/music", methods=["GET", "POST"])
 def music():
-    genre = session.get("filter_music")
-    picks = [p for p in DATA if genre and genre in p.get("music", [])]
-    return render_template("music.html", picks=picks, genre=genre)
-
-@app.route("/music/set/<genre>")
-def set_music(genre):
-    session["filter_music"] = genre
-    return redirect(url_for("music"))
-
-# INTERESTS — dropdown shows YOUR exact saved interests; match exact value; cap 10
-@app.route("/interests", methods=["GET", "POST"])
-def interests():
-    # Your saved detailed interests from profile
     profile = session.get("profile", {})
-    my_values = [profile.get(k) for k in ["sports","tech","art","food","shopping"] if profile.get(k)]
+    genres = ["Hip-Hop", "Jazz", "Classical", "Pop", "Rock"]
 
-    selected = session.get("filter_interests_exact", [])
+    with open("data/people.json", "r") as f:
+        passengers = json.load(f)
+
     if request.method == "POST":
-        val = request.form.get("interest")
-        selected = [val] if val else []
-        session["filter_interests_exact"] = selected
+        selected_genre = request.form.get("music")
 
-    picks = []
-    if selected and my_values and selected[0] in my_values:
-        target = selected[0]
-        pool = [p for p in DATA if target in person_interest_values(p)]
-        rnd = random.Random(hash(target) ^ 2025)  # deterministic shuffle per value
-        rnd.shuffle(pool)
-        picks = pool[:10]
+        # Find passengers who like that genre
+        matches = [p for p in passengers if p.get("music") == selected_genre]
 
-    return render_template("interests.html",
-                           my_values=my_values,
-                           selected=selected,
-                           picks=picks)
+        # ✅ Ensure there are at least 5 results by randomly adding others
+        import random
+        if len(matches) < 5:
+            others = [p for p in passengers if p not in matches]
+            extra_needed = 5 - len(matches)
+            random.shuffle(others)
+            matches.extend(others[:extra_needed])
 
-@app.route('/ai')
-def ai():
+        return render_template(
+            "music.html",
+            profile=profile,
+            genres=genres,
+            genre=selected_genre,
+            matches=matches,
+            active="music"
+        )
+
+    # Default view (no genre chosen)
+    return render_template(
+        "music.html",
+        profile=profile,
+        genres=genres,
+        genre=None,
+        matches=None,
+        active="music"
+    )
+
+
+    # Default view when page first loads (no selection yet)
+    return render_template(
+        "music.html",
+        profile=profile,
+        genres=genres,
+        genre=None,
+        matches=None,
+        active="music"
+    )
+
+
+
+@app.route("/set_music", methods=["POST"])
+def set_music():
+    genre = request.form.get("genre")
+    session.setdefault("profile", {})["music"] = genre
+    session.modified = True
+
+    # Filter passengers by selected music genre
+    matching_passengers = [p for p in passengers if p["music"] == genre]
+    return render_template("music.html", profile=session["profile"], genres=["Hip-Hop", "Jazz", "Classical", "Pop", "Rock"],
+                           passengers=matching_passengers, selected_genre=genre, active="music")
+
+# ---------- Interests: dropdown + connect-by-interest ----------
+
+@app.route("/interests", methods=["GET"])
+def interests():
+    """
+    Show a dropdown of ONLY the user's saved interests (from profile).
+    If the user has no interests yet, we nudge them to /profile to create one.
+    """
     profile = session.get("profile", {})
-    user_interests = profile.get("interests", [])
-    user_music = profile.get("music", "")
-    user_purpose = profile.get("purpose", "")
+    profile_interests = profile.get("interests", []) or []
+    return render_template(
+        "interests.html",
+        profile=profile,
+        profile_interests=profile_interests,
+        active="interests",
+    )
 
-    # Generate fake matches dynamically
-    all_people = [
-        {"name": "Ava", "age": 22, "music": "Hip-Hop", "interests": ["Football", "Computers", "Pizza"], "purpose": "Business"},
-        {"name": "Liam", "age": 24, "music": "Jazz", "interests": ["Pastel", "Computers", "Tech"], "purpose": "Studying Abroad"},
-        {"name": "Maya", "age": 20, "music": "Classical", "interests": ["Art", "Spaghetti", "Tech"], "purpose": "Leisure"},
-        {"name": "Ethan", "age": 21, "music": "Hip-Hop", "interests": ["Football", "Tech", "Walmart"], "purpose": "Business"},
-        {"name": "Sophia", "age": 23, "music": "Country", "interests": ["Food", "Shopping", "Computers"], "purpose": "Friends/Family"},
-        {"name": "Noah", "age": 25, "music": "Jazz", "interests": ["Art", "Tech", "Football"], "purpose": "Studying Abroad"},
-        {"name": "Olivia", "age": 26, "music": "Hip-Hop", "interests": ["Tech", "Computers", "Food"], "purpose": "Leisure"},
-        {"name": "Lucas", "age": 22, "music": "Country", "interests": ["Shopping", "Football", "Pizza"], "purpose": "Business"},
-        {"name": "Emma", "age": 24, "music": "Hip-Hop", "interests": ["Computers", "Tech", "Food"], "purpose": "Studying Abroad"},
-        {"name": "Mason", "age": 27, "music": "Classical", "interests": ["Tech", "Food", "Computers"], "purpose": "Business"}
-    ]
+@app.route("/interests", methods=["POST"])
+def connect_by_interests():
+    """
+    Handles form submission from the Interests dropdown.
+    Finds and displays passengers who share the selected interest.
+    If not enough matches, fills with random passengers (7–10 total).
+    """
+    import random
+    selected_interest = request.form.get("interest")
 
-    # Filter “recommended” people by shared interest or music or purpose
-    recommendations = []
-    for person in all_people:
-        score = 0
-        if user_music and person["music"] == user_music:
-            score += 1
-        if user_purpose and person["purpose"] == user_purpose:
-            score += 1
-        if user_interests:
-            shared = set(user_interests) & set(person["interests"])
-            score += len(shared)
-        if score > 0:
-            person["score"] = score
-            recommendations.append(person)
+    with open("data/people.json", "r") as f:
+        passengers = json.load(f)
 
-    # Sort by best matches (descending score)
-    recommendations.sort(key=lambda x: x["score"], reverse=True)
-    recommendations = recommendations[:6]  # only top 6
+    # Find all passengers who share this interest
+    matches = [p for p in passengers if selected_interest in p.get("interests", [])]
 
-    return render_template("ai.html", profile=profile, recommendations=recommendations)
+    # ✅ Guarantee 7–10 people total (fill with random others if needed)
+    if len(matches) < 7:
+        others = [p for p in passengers if p not in matches]
+        needed = random.randint(7, 10) - len(matches)
+        filler = random.sample(others, min(needed, len(others)))
+        matches.extend(filler)
+    elif len(matches) > 10:
+        matches = random.sample(matches, 10)
+
+    return render_template(
+        "connect_by_interests.html",
+        interest=selected_interest,
+        matches=matches
+    )
 
 
+@app.route("/connect/<name>")
+def connect(name):
+    import os, json
+    from flask import request
 
-# PURPOSE (browsing filter only)
+    # load directory data
+    with open("data/people.json", "r") as f:
+        passengers = json.load(f)
+
+    user = next((p for p in passengers if p["name"] == name), None)
+    if not user:
+        return redirect(url_for("interests"))
+
+    # pull chat history for this person
+    chats = session.setdefault("chat_history", {})
+    history = chats.get(name, [])
+
+    # --- scrub any old seeded demo lines, then start blank ---
+    SEED_SNIPPETS = (
+        "Hey there! Excited for our trip?",
+        "Same here! Can't wait to explore."
+    )
+    if any(any(s in m.get("text", "") for s in SEED_SNIPPETS) for m in history):
+        history = []
+
+    # if the caller explicitly wants a fresh thread: /connect/<name>?new=1
+    if request.args.get("new") == "1":
+        history = []
+
+    # save back the (possibly cleared) history
+    chats[name] = history
+    session.modified = True
+
+    return render_template("chat.html", user=user, chat_history=history)
+
+@app.route("/person/<name>")
+def person(name):
+    """Show read-only passenger profile (not edit page)."""
+    with open("data/people.json", "r") as f:
+        passengers = json.load(f)
+
+    person = next((p for p in passengers if p["name"] == name), None)
+    if not person:
+        return redirect(url_for("interests"))
+
+    return render_template("view_profile.html", person=person)
+
+
+
+
+
+@app.route("/send_message/<name>", methods=["POST"])
+def send_message(name):
+    message_text = request.form.get("message", "").strip()
+    if not message_text:
+        return redirect(url_for("connect", name=name))
+
+    with open("data/people.json", "r") as f:
+        passengers = json.load(f)
+
+    user = next((p for p in passengers if p["name"] == name), None)
+    if not user:
+        return redirect(url_for("interests"))
+
+    chat_history = session.get("chat_history", {}).get(name, [])
+
+    # Save your message
+    chat_history.append({"sender": "You", "text": message_text})
+
+    # Generate a simple AI-style reply
+    lower_msg = message_text.lower()
+    if any(word in lower_msg for word in ["hi", "hello", "hey"]):
+        reply = f"Hey there! Nice to meet you, I’m {user['name']}."
+    elif "trip" in lower_msg or "flight" in lower_msg:
+        reply = "I'm so ready for this trip — where are you flying to?"
+    elif "food" in lower_msg:
+        reply = "I love trying local foods when I travel! How about you?"
+    elif "music" in lower_msg or "song" in lower_msg:
+        reply = "Good question! I’ve been into Pop lately — what do you listen to?"
+    elif "study" in lower_msg or "abroad" in lower_msg:
+        reply = "Studying abroad is such an amazing experience! Are you doing it too?"
+    elif "vacation" in lower_msg or "family" in lower_msg:
+        reply = "That sounds relaxing! Traveling with family is always special."
+    else:
+        reply = "That’s interesting! Tell me more."
+
+    chat_history.append({"sender": user["name"], "text": reply})
+
+    # Save conversation to session
+    session.setdefault("chat_history", {})[name] = chat_history
+    session.modified = True
+
+    return redirect(url_for("connect", name=name))
+
+
 @app.route("/purpose")
 def purpose():
-    reason = session.get("filter_purpose")
-    picks = [p for p in DATA if reason and reason in p.get("purpose", [])]
-    return render_template("purpose.html", reason=reason, picks=picks)
+    profile = session.get("profile", {})
+    selected_purpose = profile.get("purpose", None)
+    purpose_options = ["Vacation", "Business", "Visiting Family", "Study Abroad"]
+    filtered_passengers = [
+        p for p in passengers if selected_purpose and p["purpose"] == selected_purpose
+    ]
+    return render_template("purpose.html", profile=profile, purpose_options=purpose_options,
+                           selected_purpose=selected_purpose, passengers=filtered_passengers, active="purpose")
 
-@app.route("/purpose/set/<reason>")
-def set_purpose(reason):
-    session["filter_purpose"] = reason
+@app.route("/set_purpose", methods=["POST"])
+def set_purpose():
+    reason = request.form.get("reason")
+    session.setdefault("profile", {})["purpose"] = reason
+    session.modified = True
     return redirect(url_for("purpose"))
 
-# PERSON page
-@app.route("/person/<int:pid>")
-def person(pid):
-    back = request.args.get("back", "home")
-    p = next(x for x in DATA if x["id"] == pid)
-    return render_template("person.html", p=p, back=back)
-
-# LIKE / RECENT
-@app.route("/like/<int:pid>", methods=["POST"])
-def like(pid):
-    likes = set(session.get("likes", []))
-    action = "added" if pid not in likes else "removed"
-    if action == "added": likes.add(pid)
-    else: likes.remove(pid)
-    session["likes"] = list(likes)
-    return jsonify(ok=True, action=action)
-
-@app.route("/recent")
-def recent():
-    ids = session.get("recent", [])
-    recents = [p for p in DATA if p["id"] in ids]
-    return render_template("recent.html", recents=recents)
-
-# ────────────────────────────────────────────────────────────────────────────────
-# Connect -> Chat; Chat screen with simple session-based messages
-# ────────────────────────────────────────────────────────────────────────────────
-@app.route("/connect/<int:pid>")
-def connect(pid):
-    recent = set(session.get("recent", []))
-    recent.add(pid)
-    session["recent"] = list(recent)
-    return redirect(url_for("chat", pid=pid))
-
-@app.route("/chat/<int:pid>", methods=["GET", "POST"])
-def chat(pid):
-    p = next(x for x in DATA if x["id"] == pid)
-    chats = session.get("chats", {})     # {'12': [{'from':'You','text':'hi'}, ...]}
-    key = str(pid)
-
-    if request.method == "POST":
-        msg = (request.form.get("message") or "").strip()
-        if msg:
-            chats.setdefault(key, []).append({"from": "You", "text": msg})
-            # tiny simulated reply so the screen feels alive
-            canned = [
-                f"Hey! I'm {p['name']}.",
-                "Nice to meet you ✈️",
-                "When do you fly?",
-                "Cool! What seat are you in?",
-                "Love that music too 🎵",
-            ]
-            chats[key].append({"from": p["name"], "text": random.choice(canned)})
-            session["chats"] = chats
-        return redirect(url_for("chat", pid=pid))
-
-    messages = chats.get(key, [])
-    return render_template("chat.html", p=p, messages=messages)
-
-# ────────────────────────────────────────────────────────────────────────────────
-# AI RECOMMEND (uses ONLY saved profile)
-# ────────────────────────────────────────────────────────────────────────────────
 @app.route("/ai")
-def ai_recommend():
+def ai():
+    import random
     profile = session.get("profile", {})
-    chosen_music = profile.get("music")
-    chosen_purpose = profile.get("purpose")
-    chosen_interests = [profile.get(k) for k in ["sports","tech","art","food","shopping"] if profile.get(k)]
 
-    results = []
-    for p in DATA:
-        score = 0
-        if chosen_music and chosen_music in p.get("music", []): score += 1
-        if chosen_purpose and chosen_purpose in p.get("purpose", []): score += 1
-        if chosen_interests:
-            score += sum(1 for i in chosen_interests if i in person_interest_values(p))
-        if score >= 3:
-            results.append((p, score))
-    return render_template("ai.html", picks=results)
+    with open("data/people.json", "r") as f:
+        passengers = json.load(f)
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Onboarding (ONLY place that updates "Your picks")
-# ────────────────────────────────────────────────────────────────────────────────
-@app.route("/onboarding", methods=["GET","POST"])
-def onboarding():
-    profile = session.get("profile", {})
-    if request.method == "POST":
-        profile = {
-            "first": request.form.get("first"),
-            "last": request.form.get("last"),
-            "music": request.form.get("music"),
-            "sports": request.form.get("sports"),
-            "tech": request.form.get("tech"),
-            "art": request.form.get("art"),
-            "food": request.form.get("food"),
-            "shopping": request.form.get("shopping"),
-            "purpose": request.form.get("purpose"),
-        }
-        session["profile"] = profile
-        return redirect(url_for("home"))
-    return render_template("onboarding.html", profile=profile)
+    # Get last seen names from session
+    last_seen = set(session.get("last_ai_names", []))
 
-# Utilities
-@app.route("/reset", methods=["POST"])
+    # Only consider people NOT seen last time
+    available = [p for p in passengers if p["name"] not in last_seen]
+
+    # If we run out of new people, reset the seen list
+    if len(available) < 6:
+        available = passengers
+        last_seen = set()
+
+    # Randomly pick 6 unique new people
+    random.shuffle(available)
+    new_matches = available[:6]
+
+    # Store these as last seen
+    session["last_ai_names"] = [p["name"] for p in new_matches]
+    session.modified = True
+
+    return render_template("ai.html", profile=profile, matches=new_matches)
+
+
+
+
+
+@app.route("/reset")
 def reset():
     session.clear()
     return redirect(url_for("home"))
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True)

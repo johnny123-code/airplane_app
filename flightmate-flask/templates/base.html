@@ -1,37 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flightmate ✈️</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
-  <header>
-    <nav class="navbar">
-      <div class="nav-left">
-        <div class="logo">✈️ Flightmate</div>
-        <input type="text" placeholder="Search passengers..." class="search-bar" />
-      </div>
-      <div class="nav-right">
-        <a href="{{ url_for('home') }}">Home</a>
-        <a href="{{ url_for('interests') }}">Interests</a>
-        <a href="{{ url_for('purpose') }}">Purpose</a>
-        <a href="{{ url_for('ai') }}">AI Recommend</a>
-        <a href="{{ url_for('onboarding') }}">Profile</a>
-        <button id="themeToggle">🌓</button>
-      </div>
+  <header class="navbar">
+    <div class="logo">✈️ Flightmate</div>
+    <nav>
+      <a href="{{ url_for('home') }}" class="{% if active=='home' %}active{% endif %}">Home</a>
+      <a href="{{ url_for('music') }}" class="{% if active=='music' %}active{% endif %}">Music</a>
+      <a href="{{ url_for('interests') }}" class="{% if active=='interests' %}active{% endif %}">Interests</a>
+      <a href="{{ url_for('purpose') }}" class="{% if active=='purpose' %}active{% endif %}">Purpose</a>
+      <a href="{{ url_for('ai') }}" class="{% if active=='ai' %}active{% endif %}">AI Recommend</a>
+      <a href="{{ url_for('create_profile') }}" class="{% if active=='profile' %}active{% endif %}">Profile</a>
     </nav>
   </header>
 
-  <main class="content">
+  <main class="main-container">
     {% block content %}{% endblock %}
   </main>
 
-  <footer>
-    <p>© 2025 Flightmate • Designed for Students ✈️</p>
+  <footer class="footer">
+    © 2025 Flightmate • Designed for Students ✈️
   </footer>
-
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

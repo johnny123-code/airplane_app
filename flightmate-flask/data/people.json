@@ -1,9 +1,20 @@
 [
-  { "id": 1, "name": "Alex",  "age": 22, "music": ["Jazz","Hip-Hop"],      "interests": ["Sports","Tech"], "destination": "New York",  "bio": "Listens to Jazz; soccer fan." },
-  { "id": 2, "name": "Emily", "age": 23, "music": ["Jazz","Classical"],    "interests": ["Food","Art"],    "destination": "Miami",     "bio": "Loves museums and pasta." },
-  { "id": 3, "name": "David", "age": 24, "music": ["Hip-Hop"],             "interests": ["Food","Sports"], "destination": "Las Vegas", "bio": "Italian food + football." },
-  { "id": 4, "name": "Jeff",  "age": 21, "music": ["Hip-Hop","Jazz"],      "interests": ["Tech","Sports"], "destination": "New York",  "bio": "CS freshman; pickup hoops." },
-  { "id": 5, "name": "Anna",  "age": 22, "music": ["Classical"],           "interests": ["Art","Food"],    "destination": "Miami",     "bio": "Violinist; cafe explorer." },
-  { "id": 6, "name": "Mark",  "age": 25, "music": ["Jazz"],                "interests": ["Sports"],        "destination": "New York",  "bio": "Knicks + playlists." },
-  { "id": 7, "name": "John",  "age": 26, "music": ["Classical","Jazz"],    "interests": ["Food"],          "destination": "Las Vegas", "bio": "Chef in training." }
+  {"name": "Noah", "purpose": "Visiting Family", "music": "Pop", "interests": ["Food", "Sports", "Travel"]},
+  {"name": "Sophia", "purpose": "Study Abroad", "music": "Pop", "interests": ["Reading", "Food", "Travel"]},
+  {"name": "Liam", "purpose": "Vacation", "music": "Hip-Hop", "interests": ["Food", "Sports", "Photography"]},
+  {"name": "Ava", "purpose": "Event / Conference", "music": "Pop", "interests": ["Photography", "Travel", "Food"]},
+  {"name": "Mason", "purpose": "Vacation", "music": "Classical", "interests": ["Sports", "Food", "Tech"]},
+  {"name": "Logan", "purpose": "Visiting Family", "music": "Hip-Hop", "interests": ["Sports", "Photography", "Food"]},
+  {"name": "Emma", "purpose": "Business", "music": "Rock", "interests": ["Tech", "Art", "Travel"]},
+  {"name": "Oliver", "purpose": "Vacation", "music": "Jazz", "interests": ["Photography", "Music", "Art"]},
+  {"name": "Isabella", "purpose": "Study Abroad", "music": "Pop", "interests": ["Reading", "Tech", "Food"]},
+  {"name": "Ethan", "purpose": "Vacation", "music": "Hip-Hop", "interests": ["Sports", "Gaming", "Food"]},
+  {"name": "Mia", "purpose": "Visiting Family", "music": "Classical", "interests": ["Travel", "Art", "Food"]},
+  {"name": "Lucas", "purpose": "Event / Conference", "music": "Jazz", "interests": ["Photography", "Music", "Food"]},
+  {"name": "Charlotte", "purpose": "Business", "music": "Rock", "interests": ["Tech", "Sports", "Art"]},
+  {"name": "James", "purpose": "Study Abroad", "music": "Hip-Hop", "interests": ["Gaming", "Tech", "Food"]},
+  {"name": "Amelia", "purpose": "Vacation", "music": "Pop", "interests": ["Travel", "Art", "Sports"]},
+  {"name": "Benjamin", "purpose": "Visiting Family", "music": "Classical", "interests": ["Photography", "Music", "Travel"]},
+  {"name": "Harper", "purpose": "Vacation", "music": "Rock", "interests": ["Food", "Photography", "Sports"]},
+  {"name": "Ella", "purpose": "Business", "music": "Jazz", "interests": ["Tech", "Travel", "Reading"]}
 ]

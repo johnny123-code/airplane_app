@@ -1,32 +1,24 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block content %}
-<div class="card stack">
+<div class="card">
   <h2>Purpose of Travel</h2>
-  <div class="row">
-    {% for r in ["Vacation","Business","Visiting Family","Study Abroad","Event / Conference"] %}
-      <a class="btn" href="{{ url_for('set_purpose', reason=r) }}">{{ r }}</a>
+  <form action="{{ url_for('set_purpose') }}" method="POST">
+    {% for option in purpose_options %}
+      <button class="btn {% if selected_purpose == option %}active{% endif %}" name="reason" value="{{ option }}">{{ option }}</button>
+    {% endfor %}
+  </form>
+
+  {% if selected_purpose %}
+  <h3>Passengers Going for {{ selected_purpose }}</h3>
+  <div class="passenger-grid">
+    {% for p in passengers %}
+      <div class="passenger-card">
+        <h4>{{ p.name }}</h4>
+        <p>{{ p.purpose }}</p>
+        <a href="{{ url_for('connect', name=p.name) }}" class="btn small">💬 Connect</a>
+      </div>
     {% endfor %}
   </div>
-  {% if reason %}<div class="badge">Selected: {{ reason }}</div>{% endif %}
+  {% endif %}
 </div>
-
-{% if picks %}
-<div class="card stack">
-  <h2>Passengers</h2>
-  {% for p in picks %}
-    <div class="person">
-      <div>
-        <div><strong>{{ p.name }}</strong></div>
-        <div class="meta">{{ p.purpose|join(", ") }}</div>
-      </div>
-      <div class="actions">
-        <button class="icon like" data-like="{{ p.id }}">❤️</button>
-        <button class="icon msg" data-chat>💬</button>
-        <a class="btn" href="{{ url_for('person', pid=p.id, back='purpose') }}">Details</a>
-        <a class="btn ok" href="{{ url_for('connect', pid=p.id) }}">Connect</a>
-      </div>
-    </div>
-  {% endfor %}
-</div>
-{% endif %}
 {% endblock %}

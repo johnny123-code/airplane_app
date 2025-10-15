@@ -1,28 +1,35 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block content %}
-<div class="card stack">
-  <h2>{{ p.name }}</h2>
-  <div class="badge">Age {{ p.age }}</div>
+<div class="card">
+  <h1>✈️ Create / Edit Profile</h1>
+  <form action="{{ url_for('save_profile') }}" method="POST">
+    <label>Name</label>
+    <input type="text" name="name" value="{{ profile.name or '' }}" required>
 
-  <div class="stack">
-    {% if p.music %}<span class="badge">🎵 {{ p.music|join(", ") }}</span>{% endif %}
+    <label>Favorite Music Genre</label>
+    <select name="genre">
+      <option value="Pop">Pop</option>
+      <option value="Hip-Hop">Hip-Hop</option>
+      <option value="Jazz">Jazz</option>
+      <option value="Classical">Classical</option>
+    </select>
 
-    {% set lines = [] %}
-    {% if p.sports %}{% set _ = lines.append('Sports: ' ~ p.sports) %}{% endif %}
-    {% if p.tech %}{% set _ = lines.append('Tech: ' ~ p.tech) %}{% endif %}
-    {% if p.art %}{% set _ = lines.append('Art: ' ~ p.art) %}{% endif %}
-    {% if p.food %}{% set _ = lines.append('Food: ' ~ p.food) %}{% endif %}
-    {% if p.shopping %}{% set _ = lines.append('Shopping: ' ~ p.shopping) %}{% endif %}
-    {% if lines %}<span class="badge">🧩 {{ lines|join(' • ') }}</span>{% endif %}
+    <label>Interests</label>
+    <div class="checkbox-group">
+      {% for item in ['Tech','Food','Sports','Art','Photography','Gaming','Travel','Fashion'] %}
+      <label><input type="checkbox" name="interests" value="{{ item }}"> {{ item }}</label>
+      {% endfor %}
+    </div>
 
-    {% if p.purpose %}<span class="badge">✈️ {{ p.purpose|join(", ") }}</span>{% endif %}
-  </div>
+    <label>Purpose of Travel</label>
+    <select name="purpose">
+      <option value="Vacation">Vacation</option>
+      <option value="Business">Business</option>
+      <option value="Visiting Family">Visiting Family</option>
+      <option value="Study Abroad">Study Abroad</option>
+    </select>
 
-  <div class="row" style="margin-top:8px">
-    <button class="icon like" data-like="{{ p.id }}">❤️</button>
-    <button class="icon msg" data-chat>💬</button>
-    <a class="btn ghost" href="{{ url_for(back) }}">Back</a>
-    <a class="btn ok" href="{{ url_for('connect', pid=p.id) }}">Connect</a>
-  </div>
+    <button type="submit" class="btn">Save Profile</button>
+  </form>
 </div>
 {% endblock %}
